@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Styleys India LLP — Inventory</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;background:#f4f4f7;color:#222;min-height:100vh}
+  button{cursor:pointer}
+  input,select{font-family:inherit;font-size:13px}
+
+  /* HEADER */
+  .header{background:#6c3fc5;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+  .header-logo{color:#fff;font-weight:700;font-size:20px;letter-spacing:1px}
+  .header-sub{color:rgba(255,255,255,0.7);font-size:12px;margin-left:10px}
+
+  /* TABS */
+  .tabs{display:flex;background:#fff;border-bottom:1px solid #e0e0e0;padding:0 24px}
+  .tab{background:none;border:none;padding:12px 18px;font-size:14px;color:#888;border-bottom:2px solid transparent;cursor:pointer}
+  .tab.active{color:#6c3fc5;border-bottom:2px solid #6c3fc5;font-weight:600}
+
+  /* CONTENT */
+  .content{padding:24px;max-width:1200px;margin:0 auto}
+
+  /* METRIC CARDS */
+  .metrics{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+  .metric{background:#fff;border-radius:8px;padding:14px 18px;flex:1;min-width:130px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  .metric-label{font-size:12px;color:#888;margin-bottom:4px}
+  .metric-value{font-size:22px;font-weight:600;color:#222}
+  .metric-value.danger{color:#a32d2d}
+
+  /* ALERT BOX */
+  .alert-box{background:#fcebeb;border:1px solid #f09595;border-radius:8px;padding:12px 16px;margin-bottom:20px}
+  .alert-title{font-weight:600;color:#a32d2d;font-size:14px;margin-bottom:6px}
+  .alert-item{font-size:13px;color:#791f1f;margin-bottom:3px}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto;background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{padding:10px 12px;text-align:left;font-weight:600;color:#666;background:#f9f9f9;white-space:nowrap}
+  td{padding:9px 12px;border-bottom:1px solid #f0f0f0}
+  tr:last-child td{border-bottom:none}
+
+  /* FORM */
+  .form-box{background:#fff;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .form-group label{display:block;font-size:11px;color:#888;margin-bottom:3px}
+  .form-group input,.form-group select{width:100%;padding:7px 10px;border-radius:6px;border:1px solid #ddd;background:#fafafa;color:#222}
+  .form-group input:focus,.form-group select:focus{outline:none;border-color:#6c3fc5}
+  .form-title{font-weight:600;font-size:14px;margin-bottom:14px}
+
+  /* BUTTONS */
+  .btn{padding:7px 16px;border-radius:6px;border:none;font-size:13px}
+  .btn-primary{background:#6c3fc5;color:#fff}
+  .btn-primary:hover{background:#5a32a3}
+  .btn-secondary{background:#f0f0f0;color:#333;border:1px solid #ddd}
+  .btn-danger{background:#fcebeb;color:#a32d2d;border:1px solid #f09595}
+  .btn-sm{padding:4px 10px;font-size:11px}
+  .btn-print{background:#6c3fc5;color:#fff;padding:4px 12px;border-radius:5px;border:none;font-size:12px}
+
+  /* BADGE */
+  .badge-ok{background:#eaf3de;color:#3b6d11;font-size:11px;padding:2px 8px;border-radius:4px}
+  .badge-low{background:#fcebeb;color:#a32d2d;font-size:11px;padding:2px 8px;border-radius:4px}
+
+  /* SEARCH ROW */
+  .search-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+  .search-row input,.search-row select{padding:7px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;font-size:13px}
+  .search-row input{flex:1;min-width:180px}
+
+  /* SALE ORDER CARD */
+  .order-card{background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  .order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .order-no{font-weight:600;font-size:14px}
+  .order-customer{margin-left:10px;color:#666;font-size:13px}
+  .order-items-text{font-size:12px;color:#888}
+
+  /* PRINT MODAL */
+  .print-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;display:flex;align-items:center;justify-content:center}
+  .print-box{background:#fff;color:#111;width:600px;max-height:90vh;overflow-y:auto;border-radius:12px;padding:36px 40px;font-family:Arial,sans-serif}
+  .print-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+  .print-logo{background:#6c3fc5;color:#fff;display:inline-block;padding:5px 14px;border-radius:6px;font-weight:700;font-size:18px;letter-spacing:1px}
+  .print-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+  .print-table th{background:#6c3fc5;color:#fff;padding:8px 10px;text-align:left}
+  .print-table td{padding:8px 10px;border-bottom:1px solid #eee}
+  .print-total-row{display:flex;justify-content:flex-end;gap:40px;font-size:13px;margin-bottom:4px}
+  .print-footer{margin-top:20px;border-top:1px solid #eee;padding-top:12px;font-size:11px;color:#999;text-align:center}
+
+  /* AI */
+  .ai-box{background:#fff;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  .ai-result{font-size:13px;line-height:1.8;white-space:pre-wrap;color:#222;margin-top:14px}
+
+  /* LOADING */
+  .loading{text-align:center;padding:40px;color:#888;font-size:14px}
+
+  /* SETUP SCREEN */
+  .setup-screen{max-width:520px;margin:60px auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+  .setup-screen h2{color:#6c3fc5;margin-bottom:8px}
+  .setup-screen p{font-size:13px;color:#666;margin-bottom:20px;line-height:1.6}
+  .setup-screen label{display:block;font-size:12px;color:#888;margin-bottom:4px;margin-top:12px}
+  .setup-screen input{width:100%;padding:9px 12px;border-radius:6px;border:1px solid #ddd;font-size:13px}
+  .setup-screen input:focus{outline:none;border-color:#6c3fc5}
+  .step-box{background:#f9f6ff;border-left:3px solid #6c3fc5;padding:10px 14px;border-radius:0 6px 6px 0;margin-bottom:16px;font-size:12px;color:#444;line-height:1.7}
+  .step-box code{background:#ede8fb;padding:1px 5px;border-radius:3px;font-size:11px;color:#5a32a3}
+
+  @media print {
+    body > *:not(.print-overlay){display:none}
+    .print-overlay{position:static;background:none}
+    .print-box{box-shadow:none;border-radius:0;max-height:none}
+    .print-actions{display:none!important}
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen" class="setup-screen" style="display:none">
+  <h2>Setup Supabase</h2>
+  <p>Styleys India LLP ke liye permanent database connect karo. Ek baar setup karo, hamesha ke liye data save rahega.</p>
+
+  <div class="step-box">
+    <b>Step 1:</b> <a href="https://supabase.com" target="_blank">supabase.com</a> pe free account banao<br>
+    <b>Step 2:</b> New Project banao → naam: <code>styleys-inventory</code><br>
+    <b>Step 3:</b> SQL Editor mein yeh run karo:<br><br>
+    <code>
+      CREATE TABLE items (id bigserial primary key, sku text, name text, category text, qty numeric, threshold numeric, unit text, price numeric, location text, created_at timestamptz default now());<br><br>
+      CREATE TABLE sales (id bigserial primary key, order_no text, customer text, sale_date date, total numeric, gst numeric, created_at timestamptz default now());<br><br>
+      CREATE TABLE sale_items (id bigserial primary key, sale_id bigint references sales(id), item_id bigint references items(id), item_name text, qty numeric, price numeric, unit text);<br><br>
+      ALTER TABLE items ENABLE ROW LEVEL SECURITY;<br>
+      ALTER TABLE sales ENABLE ROW LEVEL SECURITY;<br>
+      ALTER TABLE sale_items ENABLE ROW LEVEL SECURITY;<br>
+      CREATE POLICY "allow all" ON items FOR ALL USING (true) WITH CHECK (true);<br>
+      CREATE POLICY "allow all" ON sales FOR ALL USING (true) WITH CHECK (true);<br>
+      CREATE POLICY "allow all" ON sale_items FOR ALL USING (true) WITH CHECK (true);
+    </code><br><br>
+    <b>Step 4:</b> Settings → API → URL aur anon key copy karo
+  </div>
+
+  <label>Supabase Project URL</label>
+  <input id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co"/>
+  <label>Supabase Anon Key</label>
+  <input id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."/>
+
+  <button class="btn btn-primary" style="margin-top:16px;width:100%;padding:10px" onclick="connectSupabase()">Connect &amp; Start</button>
+  <p id="setup-error" style="color:#a32d2d;font-size:12px;margin-top:8px"></p>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+  <div class="header">
+    <div style="display:flex;align-items:center">
+      <span class="header-logo">STYLEYS</span>
+      <span class="header-sub">India LLP — Inventory</span>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="logout()" style="font-size:12px">Change DB</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('dashboard',this)">Dashboard</button>
+    <button class="tab" onclick="switchTab('inventory',this)">Inventory</button>
+    <button class="tab" onclick="switchTab('sales',this)">Sales</button>
+    <button class="tab" onclick="switchTab('ai',this)">AI Insights</button>
+  </div>
+
+  <div class="content">
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard">
+      <div class="metrics" id="metrics"></div>
+      <div id="low-stock-alert"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="form-box">
+          <div class="form-title">Stock by Category</div>
+          <div id="cat-bars"></div>
+        </div>
+        <div class="form-box">
+          <div class="form-title">Recent Sales</div>
+          <div id="recent-sales-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div id="tab-inventory" style="display:none">
+      <div class="search-row">
+        <input id="inv-search" placeholder="Search items or SKU..." oninput="renderInventory()"/>
+        <select id="inv-cat" onchange="renderInventory()">
+          <option>All</option>
+          <option>Fabric</option><option>Accessories</option><option>Packaging</option>
+          <option>Finished Goods</option><option>Raw Material</option><option>Other</option>
+        </select>
+        <button class="btn btn-primary" onclick="openItemForm(null)">+ Add Item</button>
+      </div>
+      <div id="item-form-container"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th>
+            <th>Threshold</th><th>Price (₹)</th><th>Location</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SALES -->
+    <div id="tab-sales" style="display:none">
+      <div class="form-box">
+        <div class="form-title">New Sale Order</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Customer Name</label><input id="s-customer" placeholder="Customer name"/></div>
+          <div class="form-group"><label>Date</label><input id="s-date" type="date"/></div>
+        </div>
+        <div id="sale-rows"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-secondary" onclick="addSaleRow()">+ Add Item</button>
+          <button class="btn btn-primary" onclick="submitSale()">Record Sale</button>
+        </div>
+        <div id="sale-error" style="color:#a32d2d;font-size:12px;margin-top:8px"></div>
+      </div>
+      <div class="form-title" style="margin-bottom:12px">Sale Orders</div>
+      <div id="sales-list"></div>
+    </div>
+
+    <!-- AI -->
+    <div id="tab-ai" style="display:none">
+      <div class="ai-box">
+        <div class="form-title">AI-Powered Inventory Insights</div>
+        <p style="font-size:13px;color:#666;margin-bottom:16px">Apne current stock aur sales ke basis pe smart reorder suggestions aur anomaly detection.</p>
+        <button class="btn btn-primary" onclick="getAiInsights()">Get AI Insights</button>
+        <div id="ai-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT MODAL -->
+<div id="print-modal" class="print-overlay" style="display:none" onclick="closePrint(event)">
+  <div class="print-box" onclick="event.stopPropagation()">
+    <div id="print-content"></div>
+    <div class="print-actions" style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('print-modal').style.display='none'">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let sb = null;
+let items = [];
+let sales = [];
+let saleItemCount = 1;
+
+// ── SETUP ─────────────────────────────────────────────
+window.onload = function() {
+  const url = localStorage.getItem('sb_url');
+  const key = localStorage.getItem('sb_key');
+  if (url && key) {
+    initSupabase(url, key);
+  } else {
+    document.getElementById('setup-screen').style.display = 'block';
+  }
+};
+
+function connectSupabase() {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  if (!url || !key) { document.getElementById('setup-error').textContent = 'URL aur Key dono bharo.'; return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  initSupabase(url, key);
+}
+
+function initSupabase(url, key) {
+  sb = window.supabase.createClient(url, key);
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('s-date').value = today;
+  loadAll();
+}
+
+function logout() {
+  localStorage.removeItem('sb_url');
+  localStorage.removeItem('sb_key');
+  location.reload();
+}
+
+// ── LOAD DATA ─────────────────────────────────────────
+async function loadAll() {
+  await Promise.all([loadItems(), loadSales()]);
+  renderDashboard();
+  renderInventory();
+  renderSalesList();
+  renderSaleRows();
+}
+
+async function loadItems() {
+  const { data } = await sb.from('items').select('*').order('id');
+  items = data || [];
+}
+
+async function loadSales() {
+  const { data } = await sb.from('sales').select('*, sale_items(*)').order('id', {ascending:false});
+  sales = data || [];
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function renderDashboard() {
+  const lowStock = items.filter(i => i.qty <= i.threshold);
+  const totalVal = items.reduce((s,i) => s + i.qty * i.price, 0);
+  const totalSales = sales.reduce((s,o) => s + (o.total + o.gst), 0);
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Total Items</div><div class="metric-value">${items.length}</div></div>
+    <div class="metric"><div class="metric-label">Low Stock Alerts</div><div class="metric-value ${lowStock.length>0?'danger':''}">${lowStock.length}</div></div>
+    <div class="metric"><div class="metric-label">Inventory Value</div><div class="metric-value">₹${Math.round(totalVal).toLocaleString('en-IN')}</div></div>
+    <div class="metric"><div class="metric-label">Total Sales</div><div class="metric-value">₹${Math.round(totalSales).toLocaleString('en-IN')}</div></div>
+  `;
+
+  document.getElementById('low-stock-alert').innerHTML = lowStock.length > 0 ? `
+    <div class="alert-box">
+      <div class="alert-title">Low Stock Alerts</div>
+      ${lowStock.map(i=>`<div class="alert-item">${i.name} (${i.sku}) — ${i.qty} ${i.unit} bache hain (threshold: ${i.threshold})</div>`).join('')}
+    </div>` : '';
+
+  const cats = ['Fabric','Accessories','Packaging','Finished Goods','Raw Material','Other'];
+  const maxQty = Math.max(...cats.map(c => items.filter(i=>i.category===c).reduce((s,i)=>s+i.qty,0)), 1);
+  document.getElementById('cat-bars').innerHTML = cats.map(cat => {
+    const total = items.filter(i=>i.category===cat).reduce((s,i)=>s+i.qty,0);
+    const pct = Math.round((total/maxQty)*100);
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span style="color:#666">${cat}</span><span style="font-weight:600">${total}</span>
+      </div>
+      <div style="height:6px;background:#f0f0f0;border-radius:3px">
+        <div style="height:6px;background:#6c3fc5;border-radius:3px;width:${pct}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('recent-sales-list').innerHTML = sales.slice(0,5).map(o => {
+    const amt = o.total + o.gst;
+    return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #f0f0f0">
+      <div><div style="font-weight:600">${o.order_no}</div><div style="color:#888">${o.customer}</div></div>
+      <div style="text-align:right"><div style="font-weight:600">₹${Math.round(amt).toLocaleString('en-IN')}</div><div style="color:#888">${o.sale_date}</div></div>
+    </div>`;
+  }).join('') || '<div style="color:#aaa;font-size:13px">Koi sale nahi abhi tak.</div>';
+}
+
+// ── INVENTORY ─────────────────────────────────────────
+function renderInventory() {
+  const q = document.getElementById('inv-search').value.toLowerCase();
+  const cat = document.getElementById('inv-cat').value;
+  const filtered = items.filter(i => {
+    const ms = i.name.toLowerCase().includes(q) || (i.sku||'').toLowerCase().includes(q);
+    const mc = cat === 'All' || i.category === cat;
+    return ms && mc;
+  });
+  document.getElementById('inv-tbody').innerHTML = filtered.length === 0
+    ? `<tr><td colspan="10" style="text-align:center;padding:24px;color:#aaa">Koi item nahi mila.</td></tr>`
+    : filtered.map(i => `
+      <tr>
+        <td style="color:#888">${i.sku||''}</td>
+        <td style="font-weight:600">${i.name}</td>
+        <td>${i.category}</td>
+        <td>${i.qty}</td>
+        <td>${i.unit}</td>
+        <td>${i.threshold}</td>
+        <td>₹${Number(i.price).toLocaleString('en-IN')}</td>
+        <td>${i.location||''}</td>
+        <td><span class="${i.qty<=i.threshold?'badge-low':'badge-ok'}">${i.qty<=i.threshold?'Low Stock':'OK'}</span></td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-sm" onclick="openItemForm(${i.id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteItem(${i.id})">Del</button>
+          </div>
+        </td>
+      </tr>`).join('');
+}
+
+function openItemForm(id) {
+  const item = id ? items.find(i=>i.id===id) : {sku:'',name:'',category:'Fabric',qty:0,threshold:0,unit:'pcs',price:0,location:''};
+  document.getElementById('item-form-container').innerHTML = `
+    <div class="form-box">
+      <div class="form-title">${id?'Edit Item':'New Item'}</div>
+      <div class="form-grid">
+        <div class="form-group"><label>SKU</label><input id="f-sku" value="${item.sku||''}"/></div>
+        <div class="form-group"><label>Name</label><input id="f-name" value="${item.name||''}"/></div>
+        <div class="form-group"><label>Category</label>
+          <select id="f-cat">${['Fabric','Accessories','Packaging','Finished Goods','Raw Material','Other'].map(c=>`<option ${item.category===c?'selected':''}>${c}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label>Unit</label>
+          <select id="f-unit">${['pcs','kg','meters','boxes','rolls','sets'].map(u=>`<option ${item.unit===u?'selected':''}>${u}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label>Quantity</label><input id="f-qty" type="number" value="${item.qty}"/></div>
+        <div class="form-group"><label>Reorder Threshold</label><input id="f-threshold" type="number" value="${item.threshold}"/></div>
+        <div class="form-group"><label>Price (₹)</label><input id="f-price" type="number" value="${item.price}"/></div>
+        <div class="form-group"><label>Location</label><input id="f-location" value="${item.location||''}"/></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="saveItem(${id||'null'})">Save</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('item-form-container').innerHTML=''">Cancel</button>
+      </div>
+      <div id="item-error" style="color:#a32d2d;font-size:12px;margin-top:6px"></div>
+    </div>`;
+}
+
+async function saveItem(id) {
+  const data = {
+    sku: document.getElementById('f-sku').value.trim(),
+    name: document.getElementById('f-name').value.trim(),
+    category: document.getElementById('f-cat').value,
+    unit: document.getElementById('f-unit').value,
+    qty: Number(document.getElementById('f-qty').value),
+    threshold: Number(document.getElementById('f-threshold').value),
+    price: Number(document.getElementById('f-price').value),
+    location: document.getElementById('f-location').value.trim()
+  };
+  if (!data.name) { document.getElementById('item-error').textContent='Name zaroori hai.'; return; }
+  if (id) {
+    await sb.from('items').update(data).eq('id', id);
+  } else {
+    await sb.from('items').insert(data);
+  }
+  document.getElementById('item-form-container').innerHTML='';
+  await loadItems();
+  renderInventory();
+  renderDashboard();
+}
+
+async function deleteItem(id) {
+  if (!confirm('Yeh item delete karna chahte ho?')) return;
+  await sb.from('items').delete().eq('id', id);
+  await loadItems();
+  renderInventory();
+  renderDashboard();
+}
+
+// ── SALES ─────────────────────────────────────────────
+function renderSaleRows() {
+  const rows = [];
+  for (let i = 0; i < saleItemCount; i++) {
+    rows.push(`
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-end" id="sale-row-${i}">
+        <div style="flex:2">
+          ${i===0?'<label style="display:block;font-size:11px;color:#888;margin-bottom:3px">Item</label>':''}
+          <select id="sr-item-${i}" style="width:100%;padding:7px 10px;border-radius:6px;border:1px solid #ddd;background:#fafafa">
+            <option value="">Select item...</option>
+            ${items.map(it=>`<option value="${it.id}">${it.name} (Stock: ${it.qty})</option>`).join('')}
+          </select>
+        </div>
+        <div style="flex:1">
+          ${i===0?'<label style="display:block;font-size:11px;color:#888;margin-bottom:3px">Qty</label>':''}
+          <input type="number" id="sr-qty-${i}" value="1" min="1" style="width:100%;padding:7px 10px;border-radius:6px;border:1px solid #ddd;background:#fafafa"/>
+        </div>
+        ${saleItemCount>1?`<button class="btn btn-danger btn-sm" style="padding:7px 10px" onclick="removeSaleRow(${i})">✕</button>`:''}
+      </div>`);
+  }
+  document.getElementById('sale-rows').innerHTML = rows.join('');
+}
+
+function addSaleRow() { saleItemCount++; renderSaleRows(); }
+
+function removeSaleRow(idx) {
+  const allItems = [];
+  for (let i = 0; i < saleItemCount; i++) {
+    if (i === idx) continue;
+    allItems.push({ itemId: document.getElementById(`sr-item-${i}`)?.value, qty: document.getElementById(`sr-qty-${i}`)?.value });
+  }
+  saleItemCount = allItems.length || 1;
+  renderSaleRows();
+  allItems.forEach((r, i) => {
+    const sel = document.getElementById(`sr-item-${i}`);
+    const qty = document.getElementById(`sr-qty-${i}`);
+    if (sel) sel.value = r.itemId;
+    if (qty) qty.value = r.qty;
+  });
+}
+
+async function submitSale() {
+  const customer = document.getElementById('s-customer').value.trim();
+  const date = document.getElementById('s-date').value;
+  const errEl = document.getElementById('sale-error');
+  errEl.textContent = '';
+  if (!customer) { errEl.textContent = 'Customer name zaroori hai.'; return; }
+
+  const rows = [];
+  for (let i = 0; i < saleItemCount; i++) {
+    const itemId = document.getElementById(`sr-item-${i}`)?.value;
+    const qty = Number(document.getElementById(`sr-qty-${i}`)?.value);
+    if (itemId && qty > 0) {
+      const it = items.find(x => x.id === Number(itemId));
+      if (it) rows.push({ itemId: Number(itemId), name: it.name, qty, price: it.price, unit: it.unit });
+    }
+  }
+  if (rows.length === 0) { errEl.textContent = 'Kam se kam ek item select karo.'; return; }
+
+  const subtotal = rows.reduce((s, r) => s + r.qty * r.price, 0);
+  const gst = subtotal * 0.05;
+  const orderNo = 'ORD-' + String(Date.now()).slice(-6);
+
+  const { data: saleData } = await sb.from('sales').insert({
+    order_no: orderNo, customer, sale_date: date,
+    total: subtotal, gst
+  }).select().single();
+
+  if (saleData) {
+    await sb.from('sale_items').insert(rows.map(r => ({
+      sale_id: saleData.id, item_id: r.itemId,
+      item_name: r.name, qty: r.qty, price: r.price, unit: r.unit
+    })));
+    for (const r of rows) {
+      const it = items.find(x => x.id === r.itemId);
+      await sb.from('items').update({ qty: Math.max(0, it.qty - r.qty) }).eq('id', r.itemId);
+    }
+  }
+
+  document.getElementById('s-customer').value = '';
+  saleItemCount = 1;
+  await loadAll();
+  renderSalesList();
+  renderSaleRows();
+}
+
+function renderSalesList() {
+  document.getElementById('sales-list').innerHTML = sales.map(o => {
+    const sItems = o.sale_items || [];
+    const amt = o.total + o.gst;
+    return `<div class="order-card">
+      <div class="order-header">
+        <div>
+          <span class="order-no">${o.order_no}</span>
+          <span class="order-customer">${o.customer}</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:12px;color:#888">${o.sale_date}</span>
+          <span style="font-weight:600;font-size:14px">₹${Math.round(amt).toLocaleString('en-IN')}</span>
+          <button class="btn-print" onclick="printOrder(${o.id})">Print</button>
+        </div>
+      </div>
+      <div class="order-items-text">${sItems.map(i=>`${i.item_name} × ${i.qty}`).join(' &nbsp;|&nbsp; ')}</div>
+    </div>`;
+  }).join('') || '<div style="color:#aaa;font-size:13px">Koi sale nahi abhi tak.</div>';
+}
+
+function printOrder(id) {
+  const o = sales.find(s => s.id === id);
+  if (!o) return;
+  const sItems = o.sale_items || [];
+  const subtotal = o.total;
+  const gst = o.gst;
+  const total = subtotal + gst;
+
+  document.getElementById('print-content').innerHTML = `
+    <div class="print-header">
+      <div>
+        <div class="print-logo">STYLEYS</div>
+        <div style="font-size:12px;color:#555;margin-top:4px">Styleys India LLP</div>
+        <div style="font-size:11px;color:#888">GST: 07AABCS1234Z1Z5</div>
+        <div style="font-size:11px;color:#888">New Delhi, India</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:700;font-size:18px;color:#6c3fc5">Sale Order</div>
+        <div style="font-size:13px;color:#555;margin-top:2px">${o.order_no}</div>
+        <div style="font-size:12px;color:#888">Date: ${o.sale_date}</div>
+      </div>
+    </div>
+
+    <div style="background:#f9f6ff;border-radius:6px;padding:10px 14px;margin-bottom:16px">
+      <div style="font-size:11px;color:#888">Bill To</div>
+      <div style="font-weight:600;font-size:15px;margin-top:2px">${o.customer}</div>
+    </div>
+
+    <table class="print-table">
+      <thead><tr>
+        <th>#</th><th>Item</th><th>Qty</th><th style="text-align:right">Rate (₹)</th><th style="text-align:right">Amount (₹)</th>
+      </tr></thead>
+      <tbody>
+        ${sItems.map((it,i)=>`<tr>
+          <td>${i+1}</td>
+          <td>${it.item_name}</td>
+          <td>${it.qty} ${it.unit}</td>
+          <td style="text-align:right">${Number(it.price).toFixed(2)}</td>
+          <td style="text-align:right">${(it.qty*it.price).toFixed(2)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+
+    <div style="border-top:1px solid #eee;padding-top:12px">
+      <div class="print-total-row"><span style="color:#777">Subtotal</span><span>₹${subtotal.toFixed(2)}</span></div>
+      <div class="print-total-row"><span style="color:#777">GST (5%)</span><span>₹${gst.toFixed(2)}</span></div>
+      <div class="print-total-row" style="font-weight:700;font-size:16px;border-top:2px solid #6c3fc5;padding-top:8px;margin-top:6px">
+        <span>Total</span><span>₹${total.toFixed(2)}</span>
+      </div>
+    </div>
+
+    <div class="print-footer">
+      Dhanyavaad! Aapka business hamare liye bahut important hai.<br>
+      Styleys India LLP — New Delhi | styleys.in
+    </div>`;
+
+  document.getElementById('print-modal').style.display = 'flex';
+}
+
+function closePrint(e) {
+  if (e.target === document.getElementById('print-modal')) {
+    document.getElementById('print-modal').style.display = 'none';
+  }
+}
+
+// ── TABS ──────────────────────────────────────────────
+function switchTab(name, el) {
+  ['dashboard','inventory','sales','ai'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===name?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── AI INSIGHTS ───────────────────────────────────────
+async function getAiInsights() {
+  const btn = event.target;
+  btn.textContent = 'Analyzing...';
+  btn.disabled = true;
+  document.getElementById('ai-result').innerHTML = '';
+  try {
+    const prompt = `You are an inventory advisor for Styleys India LLP, a clothing/textile business in India. Here is the current inventory:\n${JSON.stringify(items,null,2)}\nRecent sales:\n${JSON.stringify(sales.slice(0,10),null,2)}\nProvide 4-5 concise actionable insights in Hindi/English mix (Hinglish). Include reorder recommendations with specific quantities. Keep under 200 words.`;
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data = await res.json();
+    document.getElementById('ai-result').innerHTML = `<div class="ai-result">${data.content?.[0]?.text||'Koi insights nahi mili.'}</div>`;
+  } catch(e) {
+    document.getElementById('ai-result').innerHTML = '<div class="ai-result" style="color:#a32d2d">Error aa gaya. Dobara try karo.</div>';
+  }
+  btn.textContent = 'Get AI Insights';
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
